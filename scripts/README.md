@@ -23,4 +23,9 @@ touch tests/message.txt
 
 ```
 
+## HOW TO MAKE THE STANFORD PARSER
+
+The main bulk of the Stanford Parser is contained in Parser.jar
+
+
 
