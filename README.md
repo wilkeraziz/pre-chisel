@@ -1,4 +1,5 @@
 chisel
 ======
 
-http://en.wikipedia.org/wiki/Chisel
+A hierarchical decoder based on sampling.
+

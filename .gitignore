@@ -7,10 +7,11 @@
 *.so
 *.dylib
 
+# Compiled python files
+*.pyc
+
 # Compiled Static libraries
 *.lai
 *.la
 *.a
 
-# other
-.*.persrun
