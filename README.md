@@ -13,6 +13,34 @@ I have added a few features to some of the dependencies below, these changes mig
 * cdec 
 * jieba (for Chinese segmentation)
 
+## Installing
+
+I recommend you use virtualenv
+
+    virtualenv chiselenv
+
+* kenlm
+
+    source chiselenv/bin/activate
+    git clone https://github.com/wilkeraziz/kenlm.git 
+    python setup.py install
+
+* cdec
+
+    source chiselenv/bin/activate
+    git clone https://github.com/wilkeraziz/cdec.git 
+    autoreconf -ifv
+    ./configure
+    make
+    cd python
+    python setup.py install
+
+* jieba
+
+    source chiselenv/bin/activate
+    pip install jieba
+
+
 ## Citation
 
 We are still preparing our paper, so please be kind and wait a bit ;)

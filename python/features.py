@@ -20,8 +20,8 @@ def compute_feature(config, resources, fname, sample_str):
 
 def FF(config, resources, sample_str):
     """
-    config stores parameters 
-    resources stores models
-    samples_str is the translation
+    config stores parameters you might need such as paths to models, etc.
+    resources stores models (you can structure it as you like)
+    samples_str is the translation (as a string)
     """
     pass
