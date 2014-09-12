@@ -7,9 +7,11 @@ It works with phrase-based and hierarchical phrase-based models. Lots of its fea
 
 ## Requirements
 
-* cdec 
-    * You will need some modifications that might not yet have made their way upstream, so you might need this version https://github.com/wilkeraziz/cdec
+I have added a few features to some of the dependencies below, these changes might not yet have made their way upstream, so you might need to download them from my forks.
 
+* kenlm
+* cdec 
+* jieba (for Chinese segmentation)
 
 ## Citation
 
