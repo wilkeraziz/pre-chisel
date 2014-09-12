@@ -10,6 +10,8 @@ import cdec
 import gzip
 import numpy as np
 import re
+import ff
+
 from io_utils import read_config, read_weights, SegmentMetaData, fmap2str, str2fmap
 from features import compute_feature
 
@@ -35,6 +37,12 @@ def sample(forest, n):
         sampledict[sample_str.encode('utf8')].append((dict(sample_fmap), sample_dot))
     return sampledict
 
+class Hypothesis(object):
+
+    def __init__(self, source, translation):
+        self.source_ = source
+        self.translation_ = translation
+
 def map_dot(fmap, wmap):
     return sum(fmap.get(fname, 0) * fweight for fname, fweight in wmap.iteritems())
 
@@ -46,6 +54,7 @@ if __name__ == '__main__':
     parser.add_argument("config", type=str, help="config file")
     parser.add_argument("--proxy-scaling", type=float, default = 1.0, help = "scaling parameter for the proxy model") 
     parser.add_argument("--samples", type=int, default = 100, help = "number of samples") 
+    parser.add_argument('-f', "--features", nargs='*', default = [], help = "additional feature definitions") 
     parser.add_argument("--input-format", type=str, default='chisel', help="chisel (tab-separated columns: grammar source), cdec (sgml), moses (|||-separated columns: grammar source)")
     options = parser.parse_args()
 
@@ -53,10 +62,12 @@ if __name__ == '__main__':
     
     proxy_weights = read_weights(options.proxy)
     target_weights = read_weights(options.target)
-    config = read_config(options.config)
-    resources = {}
     extra_features = {k:v for k, v in target_weights.iteritems() if k not in proxy_weights}
     logging.info('Extra features: %s', extra_features)
+
+    config = read_config(options.config)
+    ff.load_features(options.features)
+    resources = ff.configure_features(config)
 
     for line in sys.stdin:
         # parses input format
@@ -68,9 +79,7 @@ if __name__ == '__main__':
         # for now we do not have access to alignment  
         for sample_str, sample_info in sorted(samples.iteritems(), key = lambda pair : len(pair[1]), reverse = True):
             # computes additional features
-            extraff = {}
-            for fname, fweight in extra_features.iteritems():
-                extraff[fname] = compute_feature(config, resources, fname, sample_str)
+            extraff = ff.compute_features(Hypothesis(source = segment.src_, translation = sample_str))
             # groups vectors associated with equivalent derivations
             counter = collections.Counter(frozenset(fmap.iteritems()) for fmap, _ in sample_info)
             # compute target vectors
@@ -78,11 +87,11 @@ if __name__ == '__main__':
             for fpairs, count in counter.iteritems():
                 # features that are reused from the proxy
                 qmap = dict(fpairs)
-                pmap = {fname:fvalue for fname, fvalue in fpairs if fname in target_weights}
-                # additional features
-                for fname, fvalue in extraff.iteritems():
+                pmap = dict(fpairs)
+                # additional features (can overwrite proxy features)
+                for fname, fvalue in extraff:
                     pmap[fname] = fvalue
-                # target score
+                # target score (the dot might skip some features, it depends on target_weights)
                 pdot = map_dot(pmap, target_weights)
                 # proxy score
                 qdot = map_dot(qmap, proxy_weights)

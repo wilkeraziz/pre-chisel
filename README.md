@@ -21,24 +21,24 @@ I recommend you use virtualenv
 
 * kenlm
 
-    source chiselenv/bin/activate
-    git clone https://github.com/wilkeraziz/kenlm.git 
-    python setup.py install
+        source chiselenv/bin/activate
+        git clone https://github.com/wilkeraziz/kenlm.git 
+        python setup.py install
 
 * cdec
 
-    source chiselenv/bin/activate
-    git clone https://github.com/wilkeraziz/cdec.git 
-    autoreconf -ifv
-    ./configure
-    make
-    cd python
-    python setup.py install
+        source chiselenv/bin/activate
+        git clone https://github.com/wilkeraziz/cdec.git 
+        autoreconf -ifv
+        ./configure
+        make
+        cd python
+        python setup.py install
 
 * jieba
 
-    source chiselenv/bin/activate
-    pip install jieba
+        source chiselenv/bin/activate
+        pip install jieba
 
 
 ## Citation
