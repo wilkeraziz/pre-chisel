@@ -1,0 +1,2 @@
+2014-09-12 11:43:55,991 : INFO : [{u'nsubj': {u'dep': u'\xe6\x88\x91-1', u'gov': u'\xe7\x88\xb1-2'}}, {u'root': {u'dep': u'\xe7\x88\xb1-2', u'gov': u'ROOT-0'}}, {u'assmod': {u'dep': u'\xe4\xbd\xa0-3', u'gov': u'\xe8\xa3\xa4\xe5\xad\x90-5'}}, {u'assm': {u'dep': u'\xe7\x9a\x84-4', u'gov': u'\xe4\xbd\xa0-3'}}, {u'dobj': {u'dep': u'\xe8\xa3\xa4\xe5\xad\x90-5', u'gov': u'\xe7\x88\xb1-2'}}]
+2014-09-12 11:43:55,992 : INFO : <type 'list'>
