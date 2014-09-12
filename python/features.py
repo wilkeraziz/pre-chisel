@@ -15,5 +15,13 @@ def KLanguageModel(config, resources, sample_str):
 def compute_feature(config, resources, fname, sample_str):
     if fname == 'KLanguageModel':
         return KLanguageModel(config, resources, sample_str)
-    raise Exception('Unknown feature: %s' % fname)
+    #raise Exception('Unknown feature: %s' % fname)
+    return 0
 
+def FF(config, resources, sample_str):
+    """
+    config stores parameters 
+    resources stores models
+    samples_str is the translation
+    """
+    pass
