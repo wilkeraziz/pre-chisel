@@ -19,7 +19,7 @@ To add a new feature function, simply implement your idea using this very simple
 
 3. Implement your features
 
-``python
+```python
     @ff.dense
     def MyFeature(hypothesis):
         """
@@ -45,6 +45,6 @@ To add a new feature function, simply implement your idea using this very simple
         fetures will be named prefix_suffix, where prefix is the function's name (e.g. MySparse)
         """
         return (('v1',0.0) , ('v2', 0.0))
-``
+```
 
 4. Optimising a bit with suffstats and cleanup
