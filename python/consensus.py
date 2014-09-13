@@ -212,7 +212,7 @@ class BLEUSufficientStatistics(object):
     def ngrams(self, h):
         return self.snt2ngrams[h]
 
-def expected_bleu(samples, bleusuff, bleu = BLEU.ibm_bleu, efficient = True):
+def expected_bleu(samples, bleusuff, bleu = BLEU.ibm_bleu, importance = lambda sample : 1.0, efficient = True):
     """
     Computes the expected (exact) BLEU of each candidate.
     @param samples is the candidates (also the evidence set)
@@ -235,7 +235,7 @@ def expected_bleu(samples, bleusuff, bleu = BLEU.ibm_bleu, efficient = True):
                     tc = bleusuff.tc(h),
                     n = bleusuff.maxorder)
             # accumulate gain
-            G[h] += b * samples[r].normcount
+            G[h] += b * samples[r].normcount * importance(samples[r])
     return G
 
 def expected_linear_bleu(samples, bleusuff, T = 1, p = 0.85, r = 0.7):

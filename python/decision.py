@@ -12,7 +12,7 @@ import math
 from consensus import expected_bleu, expected_linear_bleu, consensus_bleu
 from consensus import BLEUSufficientStatistics
 from bleu import BLEU
-from semiring import CountSemiring, MaxTimesSemiring, SumTimesSemiring
+from semiring import CountSemiring, MaxTimesSemiring, SumTimesSemiring, ProbabilitySemiring
 
 def argmax(samples, G):
     """
@@ -59,7 +59,7 @@ class FVector(object):
         for pair in pairs:
             strkey, strvalue = pair.split('=')
             strvalue = re.sub('[][()]', '', strvalue)
-            fmap[int(strkey)] = tuple(float(v) for v in strvalue.split())
+            fmap[strkey] = tuple(float(v) for v in strvalue.split())
         self.fmap_ = fmap
         self.keys_ = tuple(sorted(fmap.iterkeys()))
         self.values_ = tuple(v for k, v in sorted(fmap.iteritems(), key = lambda pair : pair[0]))
@@ -298,7 +298,7 @@ class Sample(object):
     def __str__(self):
         return ' '.join(self.leaves_)
 
-def read_solutions(fi):
+def read_solutions(fi, required = dict((k,k) for k in 'derivation vector score count'.split())):
     """
     Parse a file containing samples. The file is structured as a table (tab-separated columns).
     The first line contains the column names.
@@ -312,7 +312,7 @@ def read_solutions(fi):
     if not raw.startswith('#'):
         raise Exception('missing header')
     colnames = [colname.replace('#', '') for colname in raw.strip().split('\t')]
-    needed = frozenset('derivation vector score count'.split())
+    needed = frozenset(required.itervalues())
     # sanity check
     if not (needed <= frozenset(colnames)):
         raise Exception('missing columns: %s' % ', '.join(needed - frozenset(colnames)))
@@ -321,10 +321,10 @@ def read_solutions(fi):
     S = []
     for row in (raw.strip().split('\t') for raw in fi) :
         k2v = {key:value for key, value in zip(colnames, row)}
-        sol = Solution(derivation = Derivation(k2v['derivation']),
-                vector = FVector(k2v['vector']),
-                score = float(k2v['score']),
-                count = int(k2v['count']))
+        sol = Solution(derivation = Derivation(k2v[required['derivation']]),
+                vector = FVector(k2v[required['vector']]),
+                score = float(k2v[required['score']]),
+                count = int(k2v[required['count']]))
         S.append(sol)
     logging.info('%d rows', len(S))
     return S
@@ -369,6 +369,7 @@ def viterbi(samples):
 def print_nbest(samples, scores, score_type, nbest, out = sys.stdout):
     for sample, score in sort(samples, scores)[:nbest]:
         print >> out, 'prob=%s\t%s=%s\t%s' % (sample.normcount, score_type, score, sample)
+        #print >> out, '%s=%s\t%s' % (score_type, score, sample)
 
 def derivation_max_times(solutions, options):
     """
@@ -394,6 +395,7 @@ def derivation_sum_times(solutions, options):
         print 'Viterbi: derivation (SumTimes)'
         viterbi_scores = viterbi(samples)
         print_nbest(samples, viterbi_scores, 'score', options.nbest)
+
 
 def string_sum_times(solutions, options):
     groups = groupby(solutions, lambda sol : sol.derivation.projection)
@@ -422,6 +424,24 @@ def string_sum_times(solutions, options):
             print 'MBR: exact BLEU'
             eb_gains = expected_bleu(samples, bleusuff, BLEU.get(options.metric))
             print_nbest(samples, eb_gains, 'gain', options.nbest)
+
+def importance_sampling(solutions, options, importance):
+    groups = groupby(solutions, lambda sol : sol.derivation.projection)
+    logging.info('%d unique strings', len(groups))
+    samples = make_samples(groups, CountSemiring, ProbabilitySemiring) 
+    
+    bleusuff = BLEUSufficientStatistics(samples)
+
+    if options.mbrbleu:
+        print 'MBR: IBM-BLEU'
+        eb_gains = expected_bleu(samples, bleusuff, importance = importance)
+        print_nbest(samples, eb_gains, 'gain', options.nbest)
+    
+    if options.map:
+        print 'MAP: string'
+        map_probs = MAP(samples)
+        print_nbest(samples, map_probs, 'prob', options.nbest)
+    
     
 if __name__ == '__main__':
     
@@ -439,14 +459,30 @@ if __name__ == '__main__':
     parser.add_argument("-T", type=float, default = 1.0, help = "average number of unigram tokens (linear BLEU). Note: the MBR solution is insensitive to T") 
     parser.add_argument("-p", type=float, default = 0.85, help = "average unigram precision (linear BLEU)") 
     parser.add_argument("-r", type=float, default = 0.7, help = "average decay ratio (linear BLEU)") 
+    parser.add_argument("--sampler", type=str, default = 'rs', help = "(rs) rejection sampling, (is) importance sampling (with unnormalised importance weights), (nis) importance sampling (with normalised importance weights)")
     options = parser.parse_args()
 
     logging.basicConfig(level = logging.INFO, format = '%(levelname)s %(message)s') 
 
-    solutions = read_solutions(sys.stdin)
+    # TODO: generalise this
+    alternative = {'derivation':'translation', 'vector':'pmap', 'score':'r', 'count':'count'}
+    solutions = read_solutions(sys.stdin, alternative)
 
     #derivation_max_times(solutions, options)
     if options.viterbi:
         derivation_sum_times(solutions, options)
-    string_sum_times(solutions, options)
+
+    if options.sampler == 'rs':
+        importance = lambda sample : 1.0
+    elif options.sampler == 'is':
+        importance = lambda sample : sample.score
+    elif options.sampler == 'nis':
+        importance = lambda sample : sample.normscore
+    else:
+        raise Exception('unkown sampling algorithm: %s' % options.sampler)
+    
+    if options.sampler == 'rs':
+        string_sum_times(solutions, options)
+    else:
+        importance_sampling(solutions, options, importance)
 

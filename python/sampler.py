@@ -11,6 +11,8 @@ import gzip
 import numpy as np
 import re
 import ff
+import math
+import decision
 
 from io_utils import read_config, read_weights, SegmentMetaData, fmap2str, str2fmap
 from features import compute_feature
@@ -52,16 +54,17 @@ if __name__ == '__main__':
     parser.add_argument("proxy", type=str, help="feature weights (proxy model)")
     parser.add_argument("target", type=str, help="feature weights (target model)")
     parser.add_argument("config", type=str, help="config file")
-    parser.add_argument("--proxy-scaling", type=float, default = 1.0, help = "scaling parameter for the proxy model") 
+    parser.add_argument("--scaling", type=float, default = 1.0, help = "scaling parameter for the model") 
     parser.add_argument("--samples", type=int, default = 100, help = "number of samples") 
-    parser.add_argument('-f', "--features", nargs='*', default = [], help = "additional feature definitions") 
+    parser.add_argument("--top", type=int, default = 10, help = "Top n MBR solutions") 
+    parser.add_argument('-f', "--features", action='append', default = [], help = "additional feature definitions") 
     parser.add_argument("--input-format", type=str, default='chisel', help="chisel (tab-separated columns: grammar source), cdec (sgml), moses (|||-separated columns: grammar source)")
     options = parser.parse_args()
 
     logging.basicConfig(level = logging.INFO, format = '%(levelname)s %(message)s') 
     
-    proxy_weights = read_weights(options.proxy)
-    target_weights = read_weights(options.target)
+    proxy_weights = read_weights(options.proxy, options.scaling)
+    target_weights = read_weights(options.target, options.scaling)
     extra_features = {k:v for k, v in target_weights.iteritems() if k not in proxy_weights}
     logging.info('Extra features: %s', extra_features)
 
@@ -73,11 +76,15 @@ if __name__ == '__main__':
         # parses input format
         segment = SegmentMetaData.parse(line.strip(), options.input_format)
         # builds the proxy distribution
-        forest = build_proxy(segment.src_, segment.grammar_, options.proxy, options.proxy_scaling)
+        forest = build_proxy(segment.src_, segment.grammar_, options.proxy, options.scaling)
         # samples from the proxy distribution
         samples = sample(forest, options.samples)
+        header = '\t'.join(['#count', '#translation', '#r', '#qmap', '#qdot', '#pmap', '#pdot'])
+        print header
         # for now we do not have access to alignment  
+        ostream = [header]
         for sample_str, sample_info in sorted(samples.iteritems(), key = lambda pair : len(pair[1]), reverse = True):
+            #print >> sys.stderr, len(sample_info), sample_str
             # computes additional features
             extraff = ff.compute_features(Hypothesis(source = segment.src_, translation = sample_str))
             # groups vectors associated with equivalent derivations
@@ -98,10 +105,17 @@ if __name__ == '__main__':
                 # output info
                 output = [str(count), 
                         sample_str,
+                        str(math.exp(pdot - qdot)),
                         fmap2str(fpairs),
                         str(qdot),
                         fmap2str(pmap.iteritems()),
                         str(pdot)]
-                print ' ||| '.join(output)
+                ostream.append('\t'.join(output))
+                print ostream[-1]
                 qdots.append(qdot)
                 pdots.append(pdot)
+    
+    
+    #alternative = {'derivation':'translation', 'vector':'pmap', 'score':'r', 'count':'count'}
+    #solutions = decision.read_solutions(iter(ostream), alternative)
+    #decision.importance_sampling(solutions, options.top, importance = lambda sample : sample.normscore)

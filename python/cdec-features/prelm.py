@@ -1,5 +1,3 @@
-import logging
-import cdec.sa
 """
 This implements a simple LM feature compatible with grammar extraction in cdec.
 
@@ -11,6 +9,8 @@ This means that if no rescoring happens, the resulting proxy is a lot better tha
 @author waziz
 """
 
+import logging
+import cdec.sa
 import kenlm
 import re
 import itertools

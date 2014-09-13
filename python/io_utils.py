@@ -8,16 +8,20 @@ def read_config(path):
     config = {}
     with open(path) as f:
         for line in f:
+            if line.startswith('#'):
+                continue
             k, v = line.strip().split('=')
             config[k] = v
     return config
 
-def read_weights(path):
+def read_weights(path, scaling = 1.0):
     weights = {}
     with open(path) as f:
         for line in f:
+            if line.startswith('#'):
+                continue
             k, v = line.strip().split()
-            weights[k] = float(v)
+            weights[k] = float(v) * scaling
     return weights
 
 def str2fmap(line):
