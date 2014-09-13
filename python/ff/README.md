@@ -37,13 +37,12 @@ To add a new feature function, simply implement your idea using this very simple
             """
             return (0.0, 0.0)
 
-        @ff.features('MyF3')
-        def MyFeatures(hypothesis):
+        @ff.sparse
+        def MySparse(hypothesis):
             """
-            this function must return 1 real value
-            in this the feature will be named 'MyF3' 
-            note how the name of the python function (i.e. MyFeatures) is irrelevant when decorated with ff.features
+            this function must return a list of named feature values (i.e. pairs of the kind (suffix, fvalue))
+            fetures will be named prefix_suffix, where prefix is the function's name (e.g. MySparse)
             """
-            return (0.0, 0.0)
+            return (('v1',0.0) , ('v2', 0.0))
 
-
+4. Optimising a bit with suffstats and cleanup
