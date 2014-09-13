@@ -19,7 +19,7 @@ To add a new feature function, simply implement your idea using this very simple
 
 3. Implement your features
 
-        @ff.feature
+        @ff.dense
         def MyFeature(hypothesis):
             """
             hypothesis contains the input and the translation
@@ -31,8 +31,9 @@ To add a new feature function, simply implement your idea using this very simple
         @ff.features('MyF1', 'MyF2')
         def MyFeatures(hypothesis):
             """
-            this function must return 2 real values
+            this function must return 2 real values 
             in this case 2 features will be computed, they will be named 'MyF1' and 'MyF2', respectively
+            note these are also dense features
             """
             return (0.0, 0.0)
 
